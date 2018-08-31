@@ -56,12 +56,24 @@
       <el-button type="primary" plain size="small" @click="getUserCookies">复制到剪贴板</el-button>
     </el-collapse-item>
     <el-collapse-item name="总督" title="总督亲密度领取(所有用户)">
-      <el-form inline size="small" :model="guardGift">
+      <el-form inline size="small" :model="guardGift" @submit.native.prevent>
         <el-form-item label="房间号">
           <el-input placeholder="房间号1;房间号2..." v-model="guardGift.roomid"></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" plain size="small" @click="getGuardGift" :disabled="!guardGift.roomid.length">领取亲密度</el-button>
+        </el-form-item>
+      </el-form>
+      
+      
+    </el-collapse-item>
+    <el-collapse-item name="主站任务" title="主站分享视频">
+      <el-form inline size="small" :model="mainSiteTask" @submit.native.prevent>
+        <el-form-item label="AV号">
+          <el-input placeholder="7" v-model="mainSiteTask.av" type="number"></el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" plain size="small" @click="watchAndShareAv" :disabled="!mainSiteTask.av.length">分享</el-button>
         </el-form-item>
       </el-form>
       
@@ -103,7 +115,10 @@ export default {
       users: [],
       guardGift:{
         roomid:"",
-      }
+      },
+      mainSiteTask:{
+        av:"",
+      },
     };
   },
   computed: {
@@ -122,8 +137,25 @@ export default {
         this.users = this.$store.users;
       });
     },
+    async watchAndShareAv(){
+      for(let user of this.users){
+        this.$api.use(user).origin({
+          uri:"https://app.bilibili.com/x/v2/view/share/add",
+          method:"post",
+          form:user.SignWithBasicQuery({
+            aid:this.mainSiteTask.av,
+            access_key:user.token.access_token,
+            from:7,
+            platform:"android",
+          })
+        });
+        
+      }
+  
+
+    },
     getGuardGift(){
-      let roomid =this.guardGift.roomid;
+      let roomid =this.guardGift.roomid.replace(/(剩\d{0,5}分钟)/g,"");
       let roomid_array = roomid.match(/[0-9]{1,}/ig);//获取房间号数组
       for(let shortid of roomid_array){
         this.checkguardGift(shortid);
@@ -141,12 +173,12 @@ export default {
             let long_id = rq.data.room_id;
             //check
             let ck = await this.$api.send(
-              "lottery/v1/lottery/check",
+              "lottery/v1/Lottery/check_guard",
               {roomid:long_id},
               "get"
             );
             if(ck.code===0){
-              let GudList = ck.data.guard;
+              let GudList = ck.data;
               if(GudList.length){
                 //有总督
                 for(let gud of GudList){
@@ -154,7 +186,7 @@ export default {
                   let type = gud.keyword;
                   for(let user of this.$store.users){
                     let s =await  this.$api.use(user).send(
-                      "lottery/v1/lottery/join",
+                      "lottery/v2/Lottery/join",
                       {roomid:long_id,type,id},
                       "post"
                     );

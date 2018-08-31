@@ -1,6 +1,6 @@
 {
   "name": "bls",
-  "version": "0.0.18",
+  "version": "0.1.7",
   "author": "十字 <mscststs@qq.com>",
   "description": "Bilibili Live Super",
   "license": null,
@@ -29,6 +29,11 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
     },
+    "asar": true,
+    "asarUnpack":[
+      "./dist/electron",
+      "./package.json"
+    ],
     "dmg": {
       "contents": [
         {
